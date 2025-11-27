@@ -67,7 +67,7 @@ if(BUILD_C_HEADERS)
     add_custom_command(
       OUTPUT ${RTE_HEADER}
       COMMAND
-        ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cbind_generator.py -if
+        ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/../cbind_generator.py -if
         ${ABSOLUTE_RTEKERNELS_SOURCES} -of ${RTE_HEADER}
       COMMENT "Generating RTEKernels' C bindings header"
       DEPENDS ${ABSOLUTE_RTEKERNELS_SOURCES}

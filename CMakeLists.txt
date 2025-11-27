@@ -6,22 +6,22 @@ project(
   LANGUAGES Fortran
 )
 
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-# option(BUILD_TESTING "Build tests" OFF)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+option(BUILD_TESTING "Build tests" OFF)
 option(BUILD_C_HEADERS "Build c headers" ON)
 
-# option(RTE_ENABLE_SP "Enable single-precision floating-point model" OFF)
+option(RTE_ENABLE_SP "Enable single-precision floating-point model" OFF)
 
-# if(BUILD_C_HEADERS)
-set(RTE_BOOL "_Bool")
-set(RTE_PRECISION "double")
-set(RTE_EPSILON "2.2204460492503131e-16")
+if(BUILD_C_HEADERS)
+  set(RTE_BOOL "_Bool")
+  set(RTE_PRECISION "double")
+  set(RTE_EPSILON "2.2204460492503131e-16")
 
-  # if(RTE_ENABLE_SP)
-set(RTE_PRECISION "float")
-set(RTE_EPSILON "1.19209290E-07F")
-#   endif()
-# endif()
+  if(RTE_ENABLE_SP)
+    set(RTE_PRECISION "float")
+    set(RTE_EPSILON "1.19209290E-07F")
+  endif()
+endif()
 
 set(PREFERRED_KERNEL_MODES "default" "accel" "extern")
 set(KERNEL_MODE
@@ -53,123 +53,117 @@ endif()
 
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
 
-# if(BUILD_TESTING OR BUILD_C_HEADERS)
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-# endif()
+if(BUILD_TESTING OR BUILD_C_HEADERS)
+  find_package(Python3 REQUIRED COMPONENTS Interpreter)
+endif()
 
 add_subdirectory(rte-kernels)
 add_subdirectory(rte-frontend)
 add_subdirectory(rrtmgp-kernels)
 add_subdirectory(rrtmgp-frontend)
 
-# include(CTest)
-# if(BUILD_TESTING)
-#   if(NOT _RTE_RRTMGP_HAVE_PY_PACKAGES)
-# include(CheckPython3Package)
-# check_python3_package(numpy)
-# check_python3_package(
-#       "netCDF4 or h5netcdf+scipy"
-#       CODE "try:
-#     import netCDF4
-# except:
-#     import h5netcdf
-#     import scipy
-# "
-# )
-# check_python3_package(
-#       "xarray>=0.12.2"
-#       CODE "import xarray
-# exit(tuple(map(int, xarray.__version__.split('.'))) < (0, 12, 2))"
-# )
-# check_python3_package(dask.array)
-# set(_RTE_RRTMGP_HAVE_PY_PACKAGES
-#     TRUE
-#     CACHE INTERNAL
-#           "RTE-RRTMGP found all Python packages required for testing"
-# )
-#   # endif()
+include(CTest)
+if(BUILD_TESTING)
+  if(NOT _RTE_RRTMGP_HAVE_PY_PACKAGES)
+    include(CheckPython3Package)
+    check_python3_package(numpy)
+    check_python3_package(
+      "netCDF4 or h5netcdf+scipy"
+      CODE "try:
+    import netCDF4
+except:
+    import h5netcdf
+    import scipy
+"
+    )
+    check_python3_package(
+      "xarray>=0.12.2"
+      CODE "import xarray
+exit(tuple(map(int, xarray.__version__.split('.'))) < (0, 12, 2))"
+    )
+    check_python3_package(dask.array)
+    set(_RTE_RRTMGP_HAVE_PY_PACKAGES
+        TRUE
+        CACHE INTERNAL
+              "RTE-RRTMGP found all Python packages required for testing"
+    )
+  endif()
 
-# find_package(NetCDF_Fortran REQUIRED)
+  find_package(NetCDF_Fortran REQUIRED)
 
-#   # if(RRTMGP_DATA)
-# add_test(NAME fetch_rrtmgp_data COMMAND ${CMAKE_COMMAND} -E true)
-# message(
-#   NOTICE
-#   "Using an external dataset from ${RRTMGP_DATA}: the data files will not be installed"
-# )
-#   else()
-#     set(RRTMGP_DATA "${PROJECT_BINARY_DIR}/rrtmgp-data")
+  if(RRTMGP_DATA)
+    add_test(NAME fetch_rrtmgp_data COMMAND ${CMAKE_COMMAND} -E true)
+    message(
+      NOTICE
+      "Using an external dataset from ${RRTMGP_DATA}: the data files will not be installed"
+    )
+  else()
+    set(RRTMGP_DATA "${PROJECT_BINARY_DIR}/rrtmgp-data")
 
-#     include(ExternalProject)
-#     ExternalProject_Add(
-#       rrtmgp-data
-#       GIT_REPOSITORY https://github.com/earth-system-radiation/rrtmgp-data.git
-#       GIT_TAG "v1.9"
-#       GIT_SHALLOW True
-#       EXCLUDE_FROM_ALL True
-#       PREFIX rrtmgp-data-cmake
-#       SOURCE_DIR ${RRTMGP_DATA}
-#       CONFIGURE_COMMAND ""
-#       BUILD_COMMAND ""
-#       INSTALL_COMMAND ""
-#     )
+    include(ExternalProject)
+    ExternalProject_Add(
+      rrtmgp-data
+      GIT_REPOSITORY https://github.com/earth-system-radiation/rrtmgp-data.git
+      GIT_TAG "v1.9"
+      GIT_SHALLOW True
+      EXCLUDE_FROM_ALL True
+      PREFIX rrtmgp-data-cmake
+      SOURCE_DIR ${RRTMGP_DATA}
+      CONFIGURE_COMMAND ""
+      BUILD_COMMAND ""
+      INSTALL_COMMAND ""
+    )
 
-#     set(fetch_rrtmgp_data_command
-#         ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --config
-#         "$<CONFIG>" --target rrtmgp-data
-#     )
+    set(fetch_rrtmgp_data_command
+        ${CMAKE_COMMAND} --build ${CMAKE_CURRENT_BINARY_DIR} --config
+        "$<CONFIG>" --target rrtmgp-data
+    )
 
-#     add_test(NAME fetch_rrtmgp_data COMMAND ${fetch_rrtmgp_data_command})
+    add_test(NAME fetch_rrtmgp_data COMMAND ${fetch_rrtmgp_data_command})
 
-#     install(CODE "execute_process(COMMAND ${fetch_rrtmgp_data_command})")
-#     install(
-#       FILES # cmake-format: sort
-#             ${RRTMGP_DATA}/rrtmgp-aerosols-merra-lw.nc
-#             ${RRTMGP_DATA}/rrtmgp-aerosols-merra-sw.nc
-#             ${RRTMGP_DATA}/rrtmgp-clouds-lw-bnd.nc
-#             ${RRTMGP_DATA}/rrtmgp-clouds-sw-bnd.nc
-#             ${RRTMGP_DATA}/rrtmgp-gas-lw-g128.nc
-#             ${RRTMGP_DATA}/rrtmgp-gas-lw-g256.nc
-#             ${RRTMGP_DATA}/rrtmgp-gas-sw-g112.nc
-#             ${RRTMGP_DATA}/rrtmgp-gas-sw-g224.nc
-#       DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/rte-rrtmgp/
-#     )
-#   endif()
+    install(CODE "execute_process(COMMAND ${fetch_rrtmgp_data_command})")
+    install(
+      FILES # cmake-format: sort
+            ${RRTMGP_DATA}/rrtmgp-aerosols-merra-lw.nc
+            ${RRTMGP_DATA}/rrtmgp-aerosols-merra-sw.nc
+            ${RRTMGP_DATA}/rrtmgp-clouds-lw-bnd.nc
+            ${RRTMGP_DATA}/rrtmgp-clouds-sw-bnd.nc
+            ${RRTMGP_DATA}/rrtmgp-gas-lw-g128.nc
+            ${RRTMGP_DATA}/rrtmgp-gas-lw-g256.nc
+            ${RRTMGP_DATA}/rrtmgp-gas-sw-g112.nc
+            ${RRTMGP_DATA}/rrtmgp-gas-sw-g224.nc
+      DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/rte-rrtmgp/
+    )
+  endif()
 
-#   set_tests_properties(
-#     fetch_rrtmgp_data PROPERTIES FIXTURES_SETUP fetch_rrtmgp_data
-#   )
+  set_tests_properties(
+    fetch_rrtmgp_data PROPERTIES FIXTURES_SETUP fetch_rrtmgp_data
+  )
 
-#   add_subdirectory(examples)
-#   add_subdirectory(tests)
-# else()
-#   # Allow for 'make test' even if the tests are disabled:
-enable_testing()
-# endif()
-
-# UNCOMMENT ME MAYBE
+  add_subdirectory(examples)
+  add_subdirectory(tests)
+else()
+  # Allow for 'make test' even if the tests are disabled:
+  enable_testing()
+endif()
 
 export(
   EXPORT rte-rrtmgp-targets FILE ${PROJECT_BINARY_DIR}/rte-rrtmgp-targets.cmake
 )
 
-# UNCOMMENT ME MAYBE
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  ${PROJECT_SOURCE_DIR}/cmake/config.cmake.in
+  ${PROJECT_BINARY_DIR}/rte-rrtmgp-config.cmake
+  INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/rte-rrtmgp/cmake
+  NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO
+)
 
-# include(CMakePackageConfigHelpers)
-# configure_package_config_file(
-#   ${PROJECT_SOURCE_DIR}/cmake/config.cmake.in
-#   ${PROJECT_BINARY_DIR}/rte-rrtmgp-config.cmake
-#   INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/rte-rrtmgp/cmake
-#   NO_SET_AND_CHECK_MACRO NO_CHECK_REQUIRED_COMPONENTS_MACRO
-# )
-
-# UNCOMMENT ME MAYBE
-
-# write_basic_package_version_file(
-#   ${PROJECT_BINARY_DIR}/rte-rrtmgp-config-version.cmake
-#   VERSION ${PROJECT_VERSION}
-#   COMPATIBILITY SameMinorVersion
-# )
+write_basic_package_version_file(
+  ${PROJECT_BINARY_DIR}/rte-rrtmgp-config-version.cmake
+  VERSION ${PROJECT_VERSION}
+  COMPATIBILITY SameMinorVersion
+)
 
 install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ TYPE INCLUDE)
 
@@ -177,8 +171,6 @@ install(
   EXPORT rte-rrtmgp-targets
   DESTINATION ${CMAKE_INSTALL_LIBDIR}/rte-rrtmgp/cmake
 )
-
-# UNCOMMENT ME MAYBE
 
 install(
   FILES ${PROJECT_BINARY_DIR}/rte-rrtmgp-config.cmake
