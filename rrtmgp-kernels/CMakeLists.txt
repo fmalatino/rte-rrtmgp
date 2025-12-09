@@ -56,8 +56,8 @@ if(BUILD_C_HEADERS)
     add_custom_command(
       OUTPUT ${RRTMGP_HEADER}
       COMMAND
-        ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/../cbind_generator.py -if
-        ${ABSOLUTE_RRTMGPKERNELS_SOURCES} -of ${RRTMGP_HEADER}
+        ${Python3_EXECUTABLE} ${CMAKE_CURRENT_LIST_DIR}/../cbind_generator.py
+        -if ${ABSOLUTE_RRTMGPKERNELS_SOURCES} -of ${RRTMGP_HEADER}
       COMMENT "Generating RRTMGPKernels' C bindings header"
       DEPENDS ${ABSOLUTE_RRTMGPKERNELS_SOURCES}
     )
